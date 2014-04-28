@@ -8,19 +8,20 @@ moment.lang('ru');
 //var streams = Array();
 var im;
 var count_record;
-var length_record;
+var length_records;
 var longitude;
 var latitude;
 var altitude;
 var sputnik;
 var speed;
+var data;
 
 var server = net.createServer(function(socket){
     console.log("Connected Client: " + socket.remoteAddress + ":" + socket.remotePort);
-    im = 'undefined';
+    im = '';
     socket.on('data', function(data){
         var buf = new Buffer(data);
-        if(im == 'undefined'){
+        if(im == ''){
             if(buf.length != 17){
                 return;
             }
@@ -39,38 +40,39 @@ var server = net.createServer(function(socket){
                 console.log('difference count record');
                 return;
             }
-            length_record = buf.readUInt32BE(4);
-            if((length_record - 3) != (buf.length - 15)){
+            length_records = buf.readUInt32BE(4) - 3;
+            if(length_records != (buf.length - 15)){
                 console.log('difference length record');
                 return;
             }
-            var dd = ((buf.length - 15)/count_record);
-            console.log('length: ' + dd);
-            if(dd%1 !== 0){
-                console.log('length record is float' + dd);
+            var length_rec = (length_records/count_record);
+            if(length_rec%1 !== 0){
+                console.log('length record is float' + length_rec);
                 return;
             }
-            console.log('length: ' + (length_record - 3));
-            console.log('buf length: ' + (buf.length - 15));
             longitude = buf.readUInt32BE(19)/10000000;
             latitude = buf.readUInt32BE(23)/10000000;
             altitude = buf.readUInt16BE(27);
             sputnik = buf.readUInt8(31);
             speed = buf.readUInt16BE(32);
-            //longitude = parseInt(buf.toString('hex', 19, 23), 16)/10000000;
-            //latitude = parseInt(buf.toString('hex', 23, 27), 16)/10000000;
-            //altitude = parseInt(buf.toString('hex', 27, 29), 16);
             var unix_time = parseInt(buf.toString('hex', 10, 18), 16);
             var timestamp = new moment(unix_time).format('MMMM Do YYYY, H:mm:ss');
             console.log('timestamp record: ' + timestamp);
-            console.log("length record: " + length_record);
+            console.log("length records: " + length_records);
             console.log("count record: " + count_record);
+            console.log('length 1 record: ' + length_rec);
             console.log("Широта: " + latitude + "; Долгота: " + longitude + '; Высота: ' + altitude + '; Спутники: ' + sputnik + '; Скорость :' + speed);
             console.log(buf);
             console.log('buf length: ' + buf.length);
             console.log('socket read byte: ' + socket.bytesRead);
             var res = buf.slice(9,10);
             socket.write('\x00' + '\x00' + '\x00' + res);
+            data = new Array(count_record);
+            for(var i = 0; i < count_record; i++){
+                data[i] = buf.toString('hex', 10, 40);
+//                data[i] = buf.toString('hex', 10 + (i*length_rec)), ((length_rec + 10) + (i*length_rec));
+                console.log(i + ': ' + data[i]);
+            }
         }
     });
 
