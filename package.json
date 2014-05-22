@@ -2,9 +2,11 @@
     "name": "application-name",
     "version": "0.0.1",
     "description": "example chat application with socket.io",
-    "version": "0.0.1",
     "dependencies": {
         "socket.io": "*",
+        "mongoose": "~3.8.10",
+        "semver":    "1.1.0",
+        "config":    "0.4.32",
         "moment": "*"
     }
 }
